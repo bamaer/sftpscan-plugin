@@ -34,19 +34,15 @@ public class SFTPScan extends BaseStep implements StepInterface {
 
     public SFTPScan(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta, Trans trans) {
         super(stepMeta, stepDataInterface, copyNr, transMeta, trans);
+
+        meta = (SFTPScanMeta) getStepMeta().getStepMetaInterface();
+        data = (SFTPScanData) stepDataInterface;
     }
 
     @Override
     public boolean init(StepMetaInterface smi, StepDataInterface sdi) {
         meta = (SFTPScanMeta) smi;
         data = (SFTPScanData) sdi;
-
-        data.inputRowMeta = getInputRowMeta();
-
-        if (data.inputRowMeta == null)
-            data.outputRowMeta = new RowMeta();
-        else
-            data.outputRowMeta = data.inputRowMeta.clone();
 
         String realServerName = environmentSubstitute(meta.getServerName());
         String realServerPort = environmentSubstitute(meta.getServerPort());
@@ -107,6 +103,19 @@ public class SFTPScan extends BaseStep implements StepInterface {
     @Override
     public boolean processRow(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
 
+        Object[] r = getRow(); // get row!
+
+        if(first) {
+            data.inputRowMeta = getInputRowMeta();
+
+            if (data.inputRowMeta == null)
+                data.outputRowMeta = new RowMeta();
+            else
+                data.outputRowMeta = data.inputRowMeta.clone();
+
+            meta.getFields(data.outputRowMeta, getStepname(), null, null, this, repository, metaStore);
+        }
+
         List<RemoteFile> filelist = new ArrayList<>();
 
         if (!Const.isEmpty(realSftpDirString)) {
@@ -136,7 +145,14 @@ public class SFTPScan extends BaseStep implements StepInterface {
 
         for (RemoteFile remoteFile : filelist) {
             int idx = 0;
-            Object[] outputRow = RowDataUtil.allocateRowData(data.outputRowMeta.size());
+            Object[] outputRow;
+
+            if(data.inputRowMeta != null) {
+                idx = data.inputRowMeta.size();
+                outputRow = RowDataUtil.createResizedCopy(r, data.outputRowMeta.size());
+            } else {
+                outputRow = RowDataUtil.allocateRowData(data.outputRowMeta.size());
+            }
 
             outputRow[idx++] = remoteFile.getPath();
             outputRow[idx++] = remoteFile.getName();

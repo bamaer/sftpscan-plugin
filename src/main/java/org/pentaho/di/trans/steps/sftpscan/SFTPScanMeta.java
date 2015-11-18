@@ -75,6 +75,8 @@ public class SFTPScanMeta extends BaseStepMeta implements StepMetaInterface {
     public void getFields(RowMetaInterface inputRowMeta, String name, RowMetaInterface[] info, StepMeta nextStep, VariableSpace space, Repository repository, IMetaStore metaStore) throws KettleStepException {
         RowMetaInterface fields = new RowMeta();
 
+        fields.addRowMeta( inputRowMeta );
+
         ValueMetaInterface fileFolder = new ValueMeta("file_folder", ValueMeta.TYPE_STRING);
         fileFolder.setLength(255);
         fileFolder.setPrecision(-1);
