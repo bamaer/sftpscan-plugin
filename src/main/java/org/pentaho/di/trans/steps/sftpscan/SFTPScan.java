@@ -156,7 +156,8 @@ public class SFTPScan extends BaseStep implements StepInterface {
 
     @Override
     public void dispose(StepMetaInterface smi, StepDataInterface sdi) {
-        sftpClient.disconnect();
+        if(sftpClient != null)
+            sftpClient.disconnect();
 
         super.dispose(smi, sdi);
     }
